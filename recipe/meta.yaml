@@ -6,37 +6,47 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/pondpond-{{ version }}.tar.gz
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
   sha256: 8afa34b869d1434d21dd2ec12644abc3b1733fcda8fcf355300338a13a79bb7b
 
 build:
-  noarch: python
+  number: 0
+  skip: true  # [py<38]
   script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
-  number: 1
 
 requirements:
   host:
-    - python {{ python_min }}
-    - pdm-pep517 >=1.0.0
     - pip
+    - python
+    - pdm-pep517 >=1.0.0
   run:
-    - python >={{ python_min }}
+    - python
     - madoka >=0.7.1
 
+# Async engine doesn't work even if installed
+{% set deselect_tests = "--deselect=tests/test_aysnc_pond.py::test_async_borrow_and_recycle" %}
+{% set deselect_tests = deselect_tests + " --deselect=tests/test_pond.py::test_eviction" %}
+
 test:
+  source_files:
+    - tests
   imports:
     - pond
-  commands:
-    - pip check
   requires:
     - pip
-    - python {{ python_min }}
+    - pytest
+  commands:
+    - pip check
+    - pytest -v tests {{ deselect_tests }}
 
 about:
   home: https://github.com/T-baby/pondpond
-  summary: Pond is a high performance object-pooling library for Python.
   license: Apache-2.0
+  license_family: Apache
   license_file: LICENSE
+  summary: Pond is a high performance object-pooling library for Python.
+  doc_url: https://github.com/T-baby/pondpond
+  dev_url: https://github.com/T-baby/pondpond
 
 extra:
   recipe-maintainers:
